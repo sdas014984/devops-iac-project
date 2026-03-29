@@ -1,0 +1,20 @@
+- name: Install Java
+  yum:
+    name: java-11-openjdk
+    state: present
+
+- name: Add Jenkins repo
+  get_url:
+    url: https://pkg.jenkins.io/redhat-stable/jenkins.repo
+    dest: /etc/yum.repos.d/jenkins.repo
+
+- name: Install Jenkins
+  yum:
+    name: jenkins
+    state: present
+
+- name: Start Jenkins
+  service:
+    name: jenkins
+    state: started
+    enabled: yes

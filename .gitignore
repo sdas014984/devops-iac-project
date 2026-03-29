@@ -1,0 +1,15 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
+# Binary files
+*.exe
+*.zip
+*.tar.gz
+
+# Terraform lock (optional keep or ignore)
+.terraform.lock.hcl
+
+

@@ -1,0 +1,4 @@
+- name: Install Prometheus
+  apt:
+    name: prometheus
+    state: present
