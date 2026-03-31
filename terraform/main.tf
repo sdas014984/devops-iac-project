@@ -74,7 +74,7 @@ resource "aws_instance" "apache" {
 }
 
 resource "aws_instance" "mysql" {
-  ami           = data.aws_ami.redhat.id
+  ami           = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
   key_name      = var.key_name
   security_groups = [aws_security_group.devops_sg.name]
