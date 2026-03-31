@@ -1,30 +1,27 @@
 pipeline {
-    agent any
+  agent any
 
-    stages {
+  stages {
 
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/your-repo/devops-iac-project.git'
-            }
-        }
-
-        stage('Terraform Init') {
-            steps {
-                sh 'cd terraform && terraform init'
-            }
-        }
-
-        stage('Terraform Apply') {
-            steps {
-                sh 'cd terraform && terraform apply -auto-approve'
-            }
-        }
-
-        stage('Ansible Deploy') {
-            steps {
-                sh 'cd ansible && ansible-playbook -i inventory.ini playbook.yml'
-            }
-        }
+    stage('Terraform') {
+      steps {
+        sh '''
+        cd terraform
+        terraform init
+        terraform apply -auto-approve
+        '''
+      }
     }
+
+    stage('Ansible') {
+      steps {
+        sh '''
+        ssh ec2-user@<ansible-ip> "
+        cd ansible &&
+        ansible-playbook -i inventory.ini playbook.yml
+        "
+        '''
+      }
+    }
+  }
 }
