@@ -2,19 +2,35 @@ provider "aws" {
   region = var.region
 }
 
+resource "aws_iam_role" "ssm_role" {
+  name = "ec2-ssm-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Action = "sts:AssumeRole",
+      Effect = "Allow",
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+    }]
+  })
+}
+resource "aws_iam_role_policy_attachment" "ssm_attach" {
+  role       = aws_iam_role.ssm_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+resource "aws_iam_instance_profile" "ssm_profile" {
+  name = "ssm-instance-profile"
+  role = aws_iam_role.ssm_role.name
+}
+
 resource "aws_security_group" "devops_sg" {
   name = "devops_sg"
 
   ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    from_port   = 0
-    to_port     = 65535
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -41,32 +57,28 @@ resource "aws_instance" "ansible" {
   instance_type = var.instance_type
   key_name      = var.key_name
   security_groups = [aws_security_group.devops_sg.name]
+  iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
 
   user_data = <<-EOF
               #!/bin/bash
               apt update -y
               apt install ansible2 -y
+              
+              pip install boto3 botocore
+              ansible-galaxy collection install amazon.aws
 
-              # Create .ssh directory
-              mkdir -p /home/ec2-user/.ssh
-
-              # generate the ansible key
-              ssh-keygen -t rsa -b 4096 -f ansible_key
-
-              # Add private key
-              echo '${file("ansible_key")}' > /home/ec2-user/.ssh/id_rsa
-              chmod 600 /home/ec2-user/.ssh/id_rsa
-
-              chown -R ec2-user:ec2-user /home/ec2-user/.ssh
               EOF
 
   tags = { Name = "Ansible-Control-Node" }
 }
+
 resource "aws_instance" "jenkins" {
   ami           = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
   key_name      = var.key_name
   security_groups = [aws_security_group.devops_sg.name]
+  iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
+
   tags = { Name = "Jenkins-Server" }
 }
 
@@ -75,14 +87,7 @@ resource "aws_instance" "apache" {
   instance_type = var.instance_type
   key_name      = var.key_name
   security_groups = [aws_security_group.devops_sg.name]
-
-  user_data = <<-EOF
-              #!/bin/bash
-              mkdir -p /home/ubuntu/.ssh
-              echo '${var.ansible_public_key}' >> /home/ubuntu/.ssh/authorized_keys
-              chmod 600 /home/ubuntu/.ssh/authorized_keys
-              chown -R ubuntu:ubuntu /home/ubuntu/.ssh
-              EOF
+  iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
 
   tags = { Name = "Apache-Server" }
 }
@@ -92,14 +97,7 @@ resource "aws_instance" "mysql" {
   instance_type = var.instance_type
   key_name      = var.key_name
   security_groups = [aws_security_group.devops_sg.name]
-
-  user_data = <<-EOF
-              #!/bin/bash
-              mkdir -p /home/ec2-user/.ssh
-              echo '${var.ansible_public_key}' >> /home/ec2-user/.ssh/authorized_keys
-              chmod 600 /home/ec2-user/.ssh/authorized_keys
-              chown -R ec2-user:ec2-user /home/ec2-user/.ssh
-              EOF
+  iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
 
   tags = { Name = "MySQL-Server" }
 }
@@ -109,5 +107,11 @@ resource "aws_instance" "monitoring" {
   instance_type = var.instance_type
   key_name      = var.key_name
   security_groups = [aws_security_group.devops_sg.name]
+  iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
+  
   tags = { Name = "Monitoring-Server" }
+}
+
+resource "aws_s3_bucket" "ssm_bucket" {
+  bucket = "my-ssm-bucket-unique-name"
 }
