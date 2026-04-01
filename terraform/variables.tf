@@ -11,3 +11,7 @@ variable "instance_type" {
   default = "t3.micro"
 }
 
+variable "ansible_public_key" {
+  description = "Public key for Ansible server access"
+}
+
