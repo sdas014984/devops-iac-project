@@ -115,3 +115,25 @@ resource "aws_instance" "monitoring" {
 resource "aws_s3_bucket" "ssm_bucket" {
   bucket = "my-ssm-bucket-unique-name"
 }
+resource "aws_iam_role_policy" "ssm_s3_policy" {
+  name = "ssm-s3-access"
+  role = aws_iam_role.ssm_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:ListBucket"
+        ],
+        Resource = [
+          "arn:aws:s3:::my-ssm-bucket-unique-name",
+          "arn:aws:s3:::my-ssm-bucket-unique-name/*"
+        ]
+      }
+    ]
+  })
+}

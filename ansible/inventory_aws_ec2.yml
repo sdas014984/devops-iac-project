@@ -6,8 +6,8 @@ regions:
 filters:
   instance-state-name: running
 
-keyed_groups:
-  - key: tags.Name
-
 hostnames:
   - private-ip-address
+
+keyed_groups:
+  - key: tags.Name
