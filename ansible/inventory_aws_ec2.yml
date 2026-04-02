@@ -7,7 +7,14 @@ filters:
   instance-state-name: running
 
 hostnames:
-  - private-ip-address
+  - instance-id
+
+compose:
+  ansible_host: instance-id
 
 keyed_groups:
-  - key: tags.Name
+  - key: ec2_tags.Name
+    prefix: tag_Name_
+
+  - key: ec2_tags.Role
+    prefix: tag_Role_

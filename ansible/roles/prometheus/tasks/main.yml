@@ -2,3 +2,22 @@
   apt:
     name: prometheus
     state: present
+
+- scrape_configs:
+  - job_name: 'ec2'
+    ec2_sd_configs:
+      - region: ap-south-1
+
+    relabel_configs:
+      - source_labels: [__meta_ec2_tag_Name]
+        target_label: instance
+- groups:
+  - name: alert.rules
+    rules:
+    - alert: HighCPUUsage
+      expr: avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) < 0.2
+      for: 2m
+      labels:
+      severity: critical
+      anotations:
+        description: "CPU usage is high"

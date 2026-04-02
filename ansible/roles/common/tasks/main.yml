@@ -2,3 +2,7 @@
   package:
     name: "*"
     state: latest
+- name: Install Node Exporter
+  get_url:
+    url: https://github.com/prometheus/node_exporter/releases/latest/download/node_exporter.tar.gz
+    dest: /tmp/
